@@ -231,12 +231,25 @@ export default {
             .then((res) => {
                 console.log(res);
                 toast.success("Chamado aberto com sucesso!", {
-                    timeout: 2000
+                    timeout: 3000
                 });
+
+                this.contratos= []
+                this.contrato= ''
+                this.cliente= ''
+                this.titulo= ''
+                this.descricao= '',
+                this.categorias= []
+                this.categoria= ''
+                this.date= new Date().toJSON()
+                this.tag= ''
+    
+                this.updateCategories()
+                this.updateLocations()
             }).catch((err) => {
                 console.log(err);
                 toast.error("Erro ao abrir chamado, verifique seu token e a conexão.", {
-                    timeout: 2000
+                    timeout: 5000
                 });
             })
         },
@@ -245,18 +258,6 @@ export default {
             await this.initSession() 
             this.addChamado()
 
-            this.contratos= []
-            this.contrato= ''
-            this.cliente= ''
-            this.titulo= ''
-            this.descricao= '',
-            this.categorias= []
-            this.categoria= ''
-            this.date= new Date().toJSON()
-            this.tag= ''
-  
-            this.updateCategories()
-            this.updateLocations()
         },
         async loadSources(){
         
