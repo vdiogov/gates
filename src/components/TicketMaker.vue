@@ -6,23 +6,23 @@
         <form @submit.prevent="abrirChamado">
             <div class="row">
                 <div class="col">
-                    <label for="contrato" class="form-label">Contrato:</label>
+                    <label for="contrato" class="form-label">Cliente:</label>
                     <v-select :options="contratos" @option:selected="splitEvent" v-model="contrato" class="form-control" id="contrato"></v-select>
                 </div>
                 <div class="col">
-                    <label for="cliente" class="form-label">Cliente:</label>
-                    <input type="text" v-model="cliente" @change="splitTitulo" class="form-control" id="cliente" >
+                    <label for="cliente" class="form-label">Usuário:</label>
+                    <input type="text" v-model="cliente" @change="splitTitulo" class="form-control" id="cliente" required>
                 </div>
                 <div class="col">
-                    <label for="date" class="form-label">Data e Hora:</label>
-                    <Datepicker v-model="date" />
+                    <label for="tecnico" class="form-label">Técnico atribuído:</label>
+                    <v-select :options="tecnicos" v-model="tecnico" class="form-control" id="tecnico"></v-select>
                 </div>
                 
             </div>
             <div class="row mb-3 mt-3">
                 <div class="col">
                 <label for="titulo" class="form-label">Titulo:</label>
-                <input type="text" class="form-control" v-model="titulo" id="titulo" aria-describedby="tituloHelp">
+                <input type="text" class="form-control" v-model="titulo" id="titulo" aria-describedby="tituloHelp" required>
                 <div id="tituloHelp" class="form-text">A tag de abertura é gerada automaticamente no prenchimento do
                     cliente.</div>
                 </div>
@@ -35,17 +35,29 @@
                 <label for="descricao" class="form-label">Descrição:</label>
                 <textarea class="form-control" v-model="descricao" id="descricao" rows="5" cols="33"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Abrir chamado</button> - App Token: {{ app_token }} User Token: {{ user_token }} Session: {{ session }}
+            <button type="submit" class="btn btn-primary">Abrir chamado</button>
         </form>
+        <br>
+        <div class="row">
+            <div class="col">
+                <label for="app-token" class="form-label">App-Token:</label>
+                <input type="text" @change="loadSources" v-model="app_token" class="form-control" id="app-token" >
+            </div>
+            <div class="col">
+                <label for="user-token" class="form-label">User-Token:</label>
+                <input type="text" @change="loadSources" v-model="user_token" class="form-control" id="user-token" >
+            </div>
+        </div>
     </div>
 </template>
 
 <script>
-import vSelect from 'vue-select'
+import vSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 
-import Datepicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css'
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 import axios from 'axios'
 
@@ -65,6 +77,13 @@ export default {
             session: '',
             date: new Date().toJSON(),
             tag: '',
+            tecnicos: [
+                {'id':'9' , 'label':'Diogo Sousa' },
+                {'id':'17' , 'label':'João Miranda' },
+                {'id':'16' , 'label':'Rodrigo Moura' },
+                {'id':'8' , 'label':'Toni Alencar' },
+                ],
+            tecnico:'',
         }
     },
     methods: {
@@ -113,7 +132,7 @@ export default {
                     'App-Token': this.app_token,
                 }
                 };
-                const url = 'https://glpi.setupti.com/glpi/apirest.php/itilcategory';
+                const url = 'https://glpi.setupti.com/glpi/apirest.php/itilcategory/?range=0-1000';
 
 
                 const apicall = axios.create({
@@ -122,7 +141,7 @@ export default {
 
                 apicall.get(url, config)
                 .then((res) => {
-                    //console.log(res);
+                    console.log(res);
                     for(var i = 0; i < res.data.length ; i++){
                         var id = res.data[i].id
                         var label = res.data[i].name
@@ -132,6 +151,7 @@ export default {
 
                         this.categorias.push(cat) 
                     }
+                    this.categorias.sort((a, b) => a.label.localeCompare(b.label))
                 }).catch((err) => {
                     console.log(err);
                 })
@@ -149,7 +169,7 @@ export default {
                     'App-Token': this.app_token,
                 }
                 };
-                const url = 'https://glpi.setupti.com/glpi/apirest.php/location';
+                const url = 'https://glpi.setupti.com/glpi/apirest.php/location/?range=0-1000';
 
 
                 const apicall = axios.create({
@@ -168,6 +188,7 @@ export default {
 
                         this.contratos.push(cat) 
                     }
+                    this.contratos.sort((a, b) => a.label.localeCompare(b.label))
                 }).catch((err) => {
                     console.log(err);
                 })
@@ -196,8 +217,8 @@ export default {
                     "name": this.titulo,
                     "content": this.descricao,
                     "locations_id": this.contrato.id,
-                    "_users_id_assign": "9",
-                    "_users_id_requester": "9",
+                    "_users_id_assign": this.tecnico,
+                    "_users_id_requester": this.tecnico,
 
                 }
             };
@@ -209,9 +230,14 @@ export default {
             apicall.post(url, data, config)
             .then((res) => {
                 console.log(res);
-                this.session = res.data.session_token
+                toast.success("Chamado aberto com sucesso!", {
+                    timeout: 2000
+                });
             }).catch((err) => {
                 console.log(err);
+                toast.error("Erro ao abrir chamado, verifique seu token e a conexão.", {
+                    timeout: 2000
+                });
             })
         },
         async abrirChamado() {
@@ -226,25 +252,25 @@ export default {
             this.descricao= '',
             this.categorias= []
             this.categoria= ''
-            this.app_token= ''
-            this.user_token= ''
-            this.session= ''
             this.date= new Date().toJSON()
             this.tag= ''
   
             this.updateCategories()
             this.updateLocations()
         },
-    },
-    components: {
-        vSelect,
-        Datepicker,
-    },
-    async beforeMount(){
+        async loadSources(){
         
         await this.initSession()    
         this.updateCategories()
         this.updateLocations()
+        document.title = 'GLPI - Abertura de chamados';
+    },
+    },
+    components: {
+        vSelect,
+    },
+    beforeMount(){
+
         document.title = 'GLPI - Abertura de chamados';
     },
 }
