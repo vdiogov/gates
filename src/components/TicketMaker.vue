@@ -7,7 +7,7 @@
             <div class="row">
                 <div class="col">
                     <label for="contrato" class="form-label">Cliente:</label>
-                    <v-select :options="contratos" @option:selected="splitEvent" v-model="contrato" class="form-control" id="contrato"></v-select>
+                    <v-select :options="contratos" @option:selected="splitEvent" v-model="contrato" :clearable="false" class="form-control" id="contrato"></v-select>
                 </div>
                 <div class="col">
                     <label for="cliente" class="form-label">Usuário:</label>
@@ -28,7 +28,7 @@
                 </div>
                 <div class="col">
                     <label for="categoria" class="form-label">Categoria:</label>
-                    <v-select :options="categorias" v-model="categoria" class="form-control" id="categoria"></v-select>
+                    <v-select :options="categorias" v-model="categoria" class="form-control" :clearable="false" id="categoria"></v-select>
                 </div>
             </div>
             <div class="mb-3">
@@ -115,7 +115,7 @@ export default {
 
             return apicall.get(url, config)
             .then((res) => {
-                console.log(res);
+                //console.log(res);
                 this.session = res.data.session_token
             }).catch((err) => {
                 console.log(err);
@@ -123,7 +123,7 @@ export default {
             
         },
         updateCategories(){
-
+            var list = []
             if(this.session != ''){
                 const config = {
                 headers:{
@@ -141,7 +141,7 @@ export default {
 
                 apicall.get(url, config)
                 .then((res) => {
-                    console.log(res);
+                    //console.log(res);
                     for(var i = 0; i < res.data.length ; i++){
                         var id = res.data[i].id
                         var label = res.data[i].name
@@ -149,8 +149,9 @@ export default {
                         cat.id = id
                         cat.label = label
 
-                        this.categorias.push(cat) 
+                        list.push(cat) 
                     }
+                    this.categorias = list
                     this.categorias.sort((a, b) => a.label.localeCompare(b.label))
                 }).catch((err) => {
                     console.log(err);
@@ -159,7 +160,7 @@ export default {
             
         },
         updateLocations(){
-
+            var list = []
             if(this.session != ''){
                 
                 const config = {
@@ -178,7 +179,7 @@ export default {
 
                 apicall.get(url, config)
                 .then((res) => {
-                    //console.log(res);
+                    console.log(res);
                     for(var i = 0; i < res.data.length ; i++){
                         var id = res.data[i].id
                         var label = res.data[i].name
@@ -186,8 +187,9 @@ export default {
                         cat.id = id
                         cat.label = label
 
-                        this.contratos.push(cat) 
+                        list.push(cat) 
                     }
+                    this.contratos = list
                     this.contratos.sort((a, b) => a.label.localeCompare(b.label))
                 }).catch((err) => {
                     console.log(err);
@@ -206,10 +208,10 @@ export default {
             
             const data = {
                 "input": {
-                    "type":1,
+                    "type":2,
                     "entities_id":1,
                     "itilcategories_id": this.categoria.id,
-                    //"requesttypes_id":6,
+                    "requesttypes_id":5,
                     //"urgency":5,
                     //"impact":5,
                     //"priority":5,
@@ -261,17 +263,18 @@ export default {
         },
         async loadSources(){
         
-        await this.initSession()    
-        this.updateCategories()
-        this.updateLocations()
-        document.title = 'GLPI - Abertura de chamados';
+            await this.initSession()    
+            this.updateCategories()
+            this.updateLocations()
     },
     },
     components: {
         vSelect,
     },
-    beforeMount(){
-
+    async beforeMount(){
+        await this.initSession()    
+        this.updateCategories()
+        this.updateLocations()
         document.title = 'GLPI - Abertura de chamados';
     },
 }
